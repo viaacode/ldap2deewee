@@ -1,0 +1,3 @@
+viaa-chassis==0.0.4
+ldap3==2.6.1 
+psycopg2==2.8.4

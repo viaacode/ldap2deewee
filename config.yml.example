@@ -1,0 +1,12 @@
+viaa:
+  ldap:
+    bind: {ldap_bind}
+    URI: {ldap_URI}
+    password: {ldap_password}
+  logging:
+    level: 20
+  postgresql:
+    database: {postgresql_database}
+    host: {postgresql_host}
+    password: {postgresql_password}
+    user: {postgresql_user}
