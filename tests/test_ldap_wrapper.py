@@ -3,7 +3,7 @@ import ldap3
 
 from viaa.configuration import ConfigParser
 
-from ldap_wrapper import LdapWrapper
+from ldap_communication import LdapWrapper
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def ldap_wrapper():
 
 
 def test_search(ldap_wrapper):
-    search_result = ldap_wrapper.search('ou=people,dc=hetarchief,dc=be')
+    search_result = ldap_wrapper.search('ou=orgs,dc=hetarchief,dc=be')
     assert search_result is not None
 
 
