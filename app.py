@@ -1,4 +1,6 @@
 from datetime import datetime
+from ldap3.core.exceptions import LDAPExceptionError
+from psycopg2 import OperationalError as PSQLError
 
 from viaa.configuration import ConfigParser
 from viaa.observability import logging
@@ -47,12 +49,18 @@ class App:
         self.deewee_client.upsert_ldap_results_many([(ldap_results_orgs, 'org'), (ldap_results_people, 'person')])
 
     def main(self):
-        if self._should_do_full_sync():
-            logger.info('Start full sync')
-            self._sync()
-        else:
-            logger.info('Start sync of difference since last sync')
-            self._sync(self.deewee_client.max_last_modified_timestamp())
+        mofified_since = None
+        try:
+            if self._should_do_full_sync():
+                logger.info('Start full sync')
+            else:
+                logger.info('Start sync of difference since last sync')
+                mofified_since = self.deewee_client.max_last_modified_timestamp()
+            self._sync(mofified_since)
+        except (PSQLError, LDAPExceptionError) as e:
+            logger.error(e)
+            raise e
+        logger.info('sync successful')
 
 
 if __name__ == "__main__":

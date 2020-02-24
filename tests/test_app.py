@@ -1,12 +1,22 @@
+import pytest
+from ldap3.core.exceptions import LDAPBindError
+
 from datetime import datetime
 
 from app import App
 
 
-def test_main_full_sync():
+@pytest.fixture
+def app():
+    """Returns a instance of App.
+
+    Also truncates the PostgreSQL table in order to start with a clean slate."""
     app = App()
-    # Truncate to force a full load
     app.deewee_client.truncate_table()
+    return app
+
+
+def test_main_full_sync(app):
     assert app.deewee_client.count_type('org') == 0
     assert app.deewee_client.count_type('person') == 0
     app.main()
@@ -14,10 +24,8 @@ def test_main_full_sync():
     assert app.deewee_client.count_type('person') > 0
 
 
-def test_main_sync_none():
-    app = App()
-    app.deewee_client.truncate_table()
-    # Add a row with a created and modified timestamps after the values in LDAP
+def test_main_sync_none(app):
+    # Add a row with modified timestamp after the highest value in LDAP
     app.deewee_client.insert_entity()
     assert app.deewee_client.count() == 1
     # Should not sync anything
@@ -25,11 +33,9 @@ def test_main_sync_none():
     assert app.deewee_client.count() == 1
 
 
-def test_main_sync():
-    app = App()
+def test_main_sync(app):
     table_name = app.deewee_client.TABLE_NAME
-    app.deewee_client.truncate_table()
-    # Add a row with a created and modified timestamps before the values in LDAP
+    # Add a row with a modified timestamp before highest value in LDAP
     app.deewee_client.insert_entity(datetime(1970, 1, 1))
     assert app.deewee_client.count() == 1
     # Should insert the new ones
@@ -42,3 +48,11 @@ def test_main_sync():
     app.main()
     assert app.deewee_client.count() == count  # No new ones
     assert app.deewee_client.count_where('content is NULL') == 1
+
+
+def test_main_ldap_invalid_password(app):
+    assert app.deewee_client.count() == 0
+    app.ldap_client.ldap_wrapper.params_ldap['password'] = 'invalid'
+    with pytest.raises(LDAPBindError) as _:
+        app.main()
+    assert app.deewee_client.count() == 0
