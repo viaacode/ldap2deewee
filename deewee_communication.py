@@ -29,61 +29,49 @@ class DeeweeClient:
     """Acts as a client to query and modify information from and to DEEWEE"""
 
     TABLE_NAME = 'entities'
-    INSERT_ENTITIES_SQL = f'INSERT INTO {TABLE_NAME} \
+    UPSERT_ENTITIES_SQL = f'INSERT INTO {TABLE_NAME} \
                             (ldap_uuid, type, content, last_modified_timestamp) \
-                            VALUES (%s, %s, %s, %s);'
-    UPDATE_ENTITIES_SQL = f'UPDATE {TABLE_NAME} SET content = %s, \
-                            last_modified_timestamp = %s WHERE ldap_UUID = %s;'
+                            VALUES (%s, %s, %s, %s) \
+                            ON CONFLICT (ldap_uuid) DO UPDATE \
+                                SET content = EXCLUDED.content, \
+                                last_modified_timestamp = EXCLUDED.last_modified_timestamp'
     TRUNCATE_ENTITIES_SQL = f'TRUNCATE TABLE {TABLE_NAME};'
     COUNT_ENTITIES_SQL = f'SELECT COUNT(*) FROM {TABLE_NAME}'
-    COUNT_ENTITIES_TYPE_SQL = f'{COUNT_ENTITIES_SQL} where type = %s;'
-    MAX_LAST_MODIFIED_TIMESTAMP_SQL = f'SELECT max(last_modified_timestamp) FROM {TABLE_NAME};'
+    MAX_LAST_MODIFIED_TIMESTAMP_SQL = f'SELECT max(last_modified_timestamp) FROM {TABLE_NAME}'
 
     def __init__(self, params: dict):
         self.postgresql_wrapper = PostgresqlWrapper(params)
 
-    def _prepare_vars_insert(self, ldap_result, type: str) -> tuple:
+    def _prepare_vars_upsert(self, ldap_result, type: str) -> tuple:
         """Transforms an LDAP entry to pass to the psycopg2 execute function.
 
-        Transform it to a tuple containing the parameters to insert in a new row.
+        Transform it to a tuple containing the parameters to be able to upsert.
         """
-
         return (str(ldap_result.entryUUID), type, ldap_result.entry_to_json(),
                 ldap_result.modifyTimestamp.value)
 
-    def _prepare_vars_update(self, ldap_result) -> tuple:
-        """Transforms an LDAP entry to pass to the psycopg2 execute function.
+    def upsert_ldap_results_many(self, ldap_results: list):
+        """Upsert the LDAP entries into PostgreSQL.
 
-        Transform it to a tuple containing the parameters to update an existing row.
+       Transforms and flaatend the LDAP entries to one list in order to execute in one transaction.
+
+        Arguments:
+            ldap_results -- list of two-tuples. The tuple contains a list of LDAP entries and a type (str)
         """
-        return (ldap_result.entry_to_json(), ldap_result.modifyTimestamp.value,
-                str(ldap_result.entryUUID))
-
-    def insert_ldap_results_many(self, ldap_results: list, type):
-        # Parse the SQL values from the ldap results as a passable list
-        vars_list = [self._prepare_vars_insert(ldap_result, type) for ldap_result in ldap_results]
-        self.postgresql_wrapper.executemany(self.INSERT_ENTITIES_SQL, vars_list)
-
-    def insert_ldap_results(self, ldap_results: list, type):
-        for ldap_result in ldap_results:
-            vars = self._prepare_vars_insert(ldap_result, type)
-            self.postgresql_wrapper.execute(self.INSERT_ENTITIES_SQL, vars)
-
-    def update_ldap_results(self, ldap_results: list):
-        for ldap_result in ldap_results:
-            vars = self._prepare_vars_update(ldap_result)
-            self.postgresql_wrapper.execute(self.UPDATE_ENTITIES_SQL, vars)
+        vars_list = []
+        for ldap_result_tuple in ldap_results:
+            type = ldap_result_tuple[1]
+            # Parse and flatten the SQL values from the ldap_results as a passable list
+            vars_list.extend([self._prepare_vars_upsert(ldap_result, type) for ldap_result in ldap_result_tuple[0]])
+        self.postgresql_wrapper.executemany(self.UPSERT_ENTITIES_SQL, vars_list)
 
     def max_last_modified_timestamp(self) -> datetime:
         """Returns the highest last_modified_timestamp"""
         return self.postgresql_wrapper.execute(self.MAX_LAST_MODIFIED_TIMESTAMP_SQL)[0][0]
 
-    def exists(self, ldap_UUID: str) -> bool:
-        return self.count_where('ldap_uuid = %s', (ldap_UUID,)) == 1
-
     def insert_entity(self, date_time: datetime = datetime.now()):
         vars = ('550e8400-e29b-41d4-a716-446655440000', 'person', '{"key": "value"}', date_time)
-        self.postgresql_wrapper.execute(self.INSERT_ENTITIES_SQL, vars)
+        self.postgresql_wrapper.execute(self.UPSERT_ENTITIES_SQL, vars)
 
     def count(self) -> int:
         return self.postgresql_wrapper.execute(self.COUNT_ENTITIES_SQL)[0][0]
