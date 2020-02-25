@@ -1,4 +1,6 @@
-FROM python:3.7.6-buster
+FROM python:3.7.6-slim-buster
+
+RUN apt-get update && apt-get install -y gcc libpq-dev
 
 WORKDIR /src/usr/app
 COPY . .
