@@ -53,7 +53,7 @@ class DeeweeClient:
     def upsert_ldap_results_many(self, ldap_results: list):
         """Upsert the LDAP entries into PostgreSQL.
 
-       Transforms and flaatend the LDAP entries to one list in order to execute in one transaction.
+       Transforms and flattens the LDAP entries to one list in order to execute in one transaction.
 
         Arguments:
             ldap_results -- list of two-tuples. The tuple contains a list of LDAP entries and a type (str)
@@ -76,23 +76,23 @@ class DeeweeClient:
     def count(self) -> int:
         return self.postgresql_wrapper.execute(self.COUNT_ENTITIES_SQL)[0][0]
 
-    def count_where(self, where_clausule: str, vars: tuple = None) -> int:
+    def count_where(self, where_clause: str, vars: tuple = None) -> int:
         """Constructs and executes a 'select count(*) where' statement.
 
-        The where clausule can contain zero or more paremeters.
+        The where clause can contain zero or more paremeters.
 
-        If there are no parameters e.g. where_clausule = "column is null", vars should be None.
-        If there are one or more parameters e.g. where_clausule = "column = %s",
+        If there are no parameters e.g. clause = "column is null", vars should be None.
+        If there are one or more parameters e.g. where_clause = "column = %s",
             vars should be a tuple containing the parameters.
 
         Arguments:
-            where_clausule -- represents the entire clausule that comes after the where keyword
+            where_clause -- represents the entire clause that comes after the where keyword
             vars -- see above
 
         Returns:
             int -- the amount of records
         """
-        select_sql = f'{self.COUNT_ENTITIES_SQL} where {where_clausule};'
+        select_sql = f'{self.COUNT_ENTITIES_SQL} where {where_clause};'
         return self.postgresql_wrapper.execute(select_sql, vars)[0][0]
 
     def count_type(self, type: str) -> int:

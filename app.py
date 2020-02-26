@@ -49,14 +49,14 @@ class App:
         self.deewee_client.upsert_ldap_results_many([(ldap_results_orgs, 'org'), (ldap_results_people, 'person')])
 
     def main(self):
-        mofified_since = None
+        modified_since = None
         try:
             if self._should_do_full_sync():
                 logger.info('Start full sync')
             else:
                 logger.info('Start sync of difference since last sync')
-                mofified_since = self.deewee_client.max_last_modified_timestamp()
-            self._sync(mofified_since)
+                modified_since = self.deewee_client.max_last_modified_timestamp()
+            self._sync(modified_since)
         except (PSQLError, LDAPExceptionError) as e:
             logger.error(e)
             raise e

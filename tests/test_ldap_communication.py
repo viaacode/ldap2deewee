@@ -39,7 +39,7 @@ class TestLdapClient:
         """Returns a LdapClient initiliazed by the parameters in config.yml"""
         return LdapClient(ConfigParser().config['ldap'])
 
-    def _modifytimestamp_value(self, ldap_entry)
+    def _modifytimestamp_value(self, ldap_entry):
         """Returns the modifyTimestamp value of the LDAP entry"""
         return ldap_entry.modifyTimestamp.value
 
