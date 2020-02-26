@@ -2,7 +2,7 @@ viaa:
   ldap:
     bind: {ldap_bind}
     URI: {ldap_URI}
-    password: {ldap_password}
+    password: {ldap_admin_password}
   logging:
     level: 20
   postgresql:

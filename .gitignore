@@ -146,3 +146,6 @@ tags
 
 # Potentially contains secrets
 config.yml
+
+#Docker env files
+*env
