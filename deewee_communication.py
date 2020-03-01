@@ -1,5 +1,6 @@
 import psycopg2
 from datetime import datetime
+from functools import wraps
 
 
 class PostgresqlWrapper:
@@ -7,22 +8,33 @@ class PostgresqlWrapper:
     def __init__(self, params: dict):
         self.params_postgresql = params
 
-    def execute(self, query: str, vars=None):
+    def _connect_curs_postgresql(function):
+        """Wrapper function that connects and authenticates to the PostgreSQL DB.
+
+        The passed function will receive the open cursor.
+        """
+        @wraps(function)
+        def wrapper_connect(self, *args, **kwargs):
+            with psycopg2.connect(**self.params_postgresql) as conn:
+                with conn.cursor() as curs:
+                    val = function(self, cursor=curs, *args, **kwargs)
+            return val
+        return wrapper_connect
+
+    @_connect_curs_postgresql
+    def execute(self, query: str, vars=None, cursor=None):
         """Connects to the postgresql DB and executes the statement.
 
         Returns all results of the statement if applicable.
         """
-        with psycopg2.connect(**self.params_postgresql) as conn:
-            with conn.cursor() as curs:
-                curs.execute(query, vars)
-                if curs.description is not None:
-                    return curs.fetchall()
+        cursor.execute(query, vars)
+        if cursor.description is not None:
+            return cursor.fetchall()
 
-    def executemany(self, query: str, vars_list: list):
+    @_connect_curs_postgresql
+    def executemany(self, query: str, vars_list: list, cursor=None):
         """Connects to the postgresql DB and executes the many statement"""
-        with psycopg2.connect(**self.params_postgresql) as conn:
-            with conn.cursor() as curs:
-                curs.executemany(query, vars_list)
+        cursor.executemany(query, vars_list)
 
 
 class DeeweeClient:
