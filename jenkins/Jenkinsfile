@@ -1,0 +1,42 @@
+pipeline {
+    agent {
+      node {
+        // spin up a pod to run this build on
+        label 'docker'
+      }
+    }
+    options {
+        timeout(time: 45, unit: 'MINUTES')
+    }
+    environment {
+        VERSION = sh(returnStdout: true, script: "git describe --tags || echo latest").trim()
+        BRANCH = sh(returnStdout: true, script: "git branch | grep '*' | cut -d ' ' -f2").trim()
+        REGISTRY = "docker-registry-default.apps.do-prd-okp-m0.do.viaa.be"
+    }
+    stages {
+        stage('Build docker') {
+            steps {
+                sh './jenkins/scripts/build.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+            }
+        }
+        stage('Test in docker container') {
+            steps {
+                sh './jenkins/scripts/test.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+            }
+        }
+        stage('Run the linter') {
+            steps {
+                sh './jenkins/scripts/lint.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+            }
+        }
+    }
+    post {
+        always {
+                sh '''#!/bin/bash
+                   docker container rm ldap2deewee_test
+                   docker container rm ldap2deewee_lint
+                   '''
+                cleanWs()
+        }
+    }
+}
