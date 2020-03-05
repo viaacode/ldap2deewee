@@ -5,9 +5,13 @@ from functools import wraps
 
 class LdapWrapper:
     """Allows for communicating with an LDAP server"""
-    def __init__(self, params: dict, search_attributes: list = ldap3.ALL_ATTRIBUTES):
-        self.params_ldap = params
+    def __init__(self, params: dict, search_attributes=ldap3.ALL_ATTRIBUTES,
+                 get_info=ldap3.SCHEMA, client_strategy=ldap3.SYNC):
         self.search_attributes = search_attributes
+
+        server = ldap3.Server(params['URI'], get_info=get_info)
+        self.connection = ldap3.Connection(server, params['bind'],
+                                           params['password'], client_strategy=client_strategy)
 
     def _connect_auth_ldap(function):
         """Wrapper function that connects and authenticates to the LDAP server.
@@ -16,24 +20,28 @@ class LdapWrapper:
         """
         @wraps(function)
         def wrapper_connect(self, *args, **kwargs):
-            server = ldap3.Server(self.params_ldap['URI'])
-            with ldap3.Connection(server, self.params_ldap['bind'], self.params_ldap['password'], auto_bind=True) as conn:
-                val = function(self, connection=conn, *args, **kwargs)
+            try:
+                self.connection.bind()
+                val = function(self, *args, **kwargs)
+            except ldap3.core.exceptions.LDAPException as exception:
+                raise exception
+            finally:
+                self.connection.unbind()
             return val
         return wrapper_connect
 
     @_connect_auth_ldap
-    def search(self, search_base: str, filter: str = '(objectClass=*)', connection=None):
-        connection.search(search_base, filter, attributes=self.search_attributes)
-        return connection.entries
+    def search(self, search_base: str, filter: str = '(objectClass=*)'):
+        self.connection.search(search_base, filter, attributes=self.search_attributes)
+        return self.connection.entries
 
     @_connect_auth_ldap
-    def add(self, dn: str, object_class=None, attributes=None, connection=None):
-        return connection.add(dn, object_class, attributes)
+    def add(self, dn: str, object_class=None, attributes=None):
+        return self.connection.add(dn, object_class, attributes)
 
     @_connect_auth_ldap
-    def delete(self, dn: str, connection=None):
-        return connection.delete(dn)
+    def delete(self, dn: str):
+        return self.connection.delete(dn)
 
 
 class LdapClient:
@@ -42,10 +50,10 @@ class LdapClient:
     LDAP_SUFFIX = 'dc=hetarchief,dc=be'
     LDAP_PEOPLE_PREFIX = 'ou=people'
     LDAP_ORGS_PREFIX = 'ou=orgs'
+    SEARCH_ATTRIBUTES = [ldap3.ALL_ATTRIBUTES, 'modifyTimestamp', 'entryUUID']
 
-    def __init__(self, params: dict):
-        search_attributes = [ldap3.ALL_ATTRIBUTES, 'modifyTimestamp', 'entryUUID']
-        self.ldap_wrapper = LdapWrapper(params, search_attributes)
+    def __init__(self, params: dict,):
+        self.ldap_wrapper = LdapWrapper(params, self.SEARCH_ATTRIBUTES)
 
     def _search_ldap(self, prefix: str, partial_filter: str, modified_at: datetime = None) -> list:
         # Format modify timestamp to an LDAP filter string

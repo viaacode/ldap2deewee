@@ -1,5 +1,8 @@
+import pytest
 from unittest.mock import patch
 from datetime import datetime
+from ldap3.core.exceptions import LDAPExceptionError
+from psycopg2 import OperationalError as PSQLError
 
 from app import App
 from deewee_communication import DeeweeClient
@@ -68,3 +71,16 @@ class TestApp:
         assert search_ldap_orgs_mock.call_args[0][0] is None
         assert search_ldap_people_mock.call_args[0][0] is None
         assert upsert_ldap_results_many_mock.call_args[0][0] == [(['org1'], 'org'), (['person1'], 'person')]
+
+    @patch.object(App, '_should_do_full_sync', side_effect=PSQLError)
+    def test_main_psql_error(self, should_do_full_sync_mock):
+        app = App()
+        with pytest.raises(PSQLError):
+            app.main()
+
+    @patch.object(App, '_sync', side_effect=LDAPExceptionError)
+    @patch.object(App, '_should_do_full_sync', return_value=True)
+    def test_main_ldap_error(self, should_do_full_sync_mock, sync_mock):
+        app = App()
+        with pytest.raises(LDAPExceptionError):
+            app.main()
