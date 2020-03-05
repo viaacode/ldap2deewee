@@ -16,17 +16,17 @@ pipeline {
     stages {
         stage('Build docker') {
             steps {
-                sh './jenkins/scripts/build.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+                sh './jenkins/scripts/build.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
             }
         }
         stage('Test in docker container') {
             steps {
-                sh './jenkins/scripts/test.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+                sh './jenkins/scripts/test.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
             }
         }
         stage('Run the linter') {
             steps {
-                sh './jenkins/scripts/lint.sh ${REGISTRY} ${BRANCH} ${VERSION}'
+                sh './jenkins/scripts/lint.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
             }
         }
     }
