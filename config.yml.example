@@ -1,6 +1,6 @@
 viaa:
   ldap:
-    bind: "{ldap_bind}"
+    bind: "cn=root,dn=company,dn=org"
     URI: "{ldap_URI}"
     password: "{ldap_admin_password}"
   logging:
