@@ -19,7 +19,6 @@ RUN apk add --no-cache postgresql-dev python3
 
 WORKDIR /src/usr/app/
 COPY . .
-RUN rm -r ./venv
 
 # Copy the virtual environment from the builder image
 COPY --from=builder /src/usr/app/venv/ /src/usr/app/venv/
