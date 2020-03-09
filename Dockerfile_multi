@@ -45,8 +45,13 @@ CMD ["-m", "pytest", "--cov=app", "--cov=deewee_communication", "--cov=ldap_comm
 
 
 # Create image which will run the linter
-FROM app as lint
+FROM alpine:3.11 as lint
 
-RUN ./venv/bin/python3 -m pip install flake8
+RUN apk add --no-cache python3 py3-pip
 
-CMD ["./venv/bin/flake8", "--exit-zero", "--exclude=./venv"]
+WORKDIR /src/usr/app/
+COPY . .
+
+RUN python3 -m pip install flake8
+
+CMD ["flake8", "--exit-zero", "--exclude=./venv"]
