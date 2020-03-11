@@ -2,6 +2,7 @@ import pytest
 import ldap3
 from datetime import timedelta, datetime
 import time
+import copy
 
 from viaa.configuration import ConfigParser
 
@@ -15,12 +16,17 @@ DN_ORG2 = f'o=meemoo_org2,{LDAP_ORGS}'
 DN_PERSON1 = f'mail=meemoo_user1@meemoo.meemoo,{LDAP_PEOPLE}'
 DN_PERSON2 = f'mail=meemoo_user2@meemoo.meemoo,{LDAP_PEOPLE}'
 
+ldap_config_dict = ConfigParser().config['ldap']
 
 class LdapWrapperMock(LdapWrapper):
 
     def __init__(self, params: dict, search_attributes=ldap3.ALL_ATTRIBUTES):
         super().__init__(params, get_info=ldap3.OFFLINE_SLAPD_2_4, client_strategy=ldap3.MOCK_SYNC)
-        self.connection.strategy.add_entry(params['bind'], {'userPassword': params['password'], 'sn': 'admin_sn'})
+        user = params.get('bind')
+        password = params.get('password')
+        # Allow for anonymous access
+        if user is not None and password is not None:
+            self.connection.strategy.add_entry(user, {'userPassword': password, 'sn': 'admin_sn'})
 
 
 class LdapClientMock(LdapClient):
@@ -34,7 +40,7 @@ class TestLdapWrapperMock:
     @pytest.fixture
     def ldap_wrapper(self):
         """Returns a LdapWrapperMock initiliazed by the parameters in config.yml"""
-        return LdapWrapperMock(ConfigParser().config['ldap'])
+        return LdapWrapperMock(ldap_config_dict)
 
     def test_search(self, ldap_wrapper):
         search_result = ldap_wrapper.search(LDAP_ORGS)
@@ -58,13 +64,24 @@ class TestLdapWrapperMock:
         assert delete_result
 
 
+class TestLdapWrapperMockAnonymous(TestLdapWrapperMock):
+
+    @pytest.fixture
+    def ldap_wrapper(self):
+        """Returns a LdapWrapperMock initiliazed by the parameters in config.yml without user/password"""
+        ldap_config_dict_anonymous = copy.deepcopy(ldap_config_dict)
+        del ldap_config_dict_anonymous['bind']
+        del ldap_config_dict_anonymous['password']
+        return LdapWrapperMock(ldap_config_dict_anonymous)
+
+
 class TestLdapClientMock:
     """Tests if the client can communicate with an LDAP mock server"""
 
     @classmethod
     def setup_class(cls):
         """ Create two orgs and two people"""
-        cls.ldap_client = LdapClientMock(ConfigParser().config['ldap'])
+        cls.ldap_client = LdapClientMock(ldap_config_dict)
         ldap_wrapper = cls.ldap_client.ldap_wrapper
         ldap_wrapper.add(DN_ORG1, 'organization', {'o': 'meemoo_org1', 'modifyTimestamp': datetime.now()})
         time.sleep(1)

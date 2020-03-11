@@ -9,9 +9,13 @@ class LdapWrapper:
                  get_info=ldap3.SCHEMA, client_strategy=ldap3.SYNC):
         self.search_attributes = search_attributes
 
+        # These can potentially be absent so that anonymous access is allowed
+        user = params.get('bind')
+        password = params.get('password')
+
         server = ldap3.Server(params['URI'], get_info=get_info)
-        self.connection = ldap3.Connection(server, params['bind'],
-                                           params['password'], client_strategy=client_strategy)
+        self.connection = ldap3.Connection(server, user,
+                                           password, client_strategy=client_strategy)
 
     def _connect_auth_ldap(function):
         """Wrapper function that connects and authenticates to the LDAP server.
