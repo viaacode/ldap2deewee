@@ -1,6 +1,6 @@
-FROM python:3.7.6-slim-buster
+FROM python:3.7.6-alpine3.11
 
-RUN apt-get update && apt-get install -y gcc libpq-dev postgresql-11 && apt-get clean
+RUN apk add --no-cache postgresql-dev gcc musl-dev postgresql
 
 WORKDIR /src/usr/app
 COPY . .
