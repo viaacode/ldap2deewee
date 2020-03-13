@@ -17,7 +17,6 @@ logger = logging.get_logger(__name__, config=config)
 class App:
 
     def __init__(self):
-
         # Initialize ldap and deewee clients
         self.ldap_client = LdapClient(config.config['ldap'])
         self.deewee_client = DeeweeClient(config.config['postgresql'])
@@ -54,8 +53,8 @@ class App:
             if self._should_do_full_sync():
                 logger.info('Start full sync')
             else:
-                logger.info('Start sync of difference since last sync')
                 modified_since = self.deewee_client.max_last_modified_timestamp()
+                logger.info(f'Start sync of difference since last sync - {modified_since.isoformat()}')
             self._sync(modified_since)
         except (PSQLError, LDAPExceptionError) as e:
             logger.error(e)
