@@ -11,7 +11,7 @@ pipeline {
     environment {
         VERSION = sh(returnStdout: true, script: "git describe --tags || echo latest").trim()
         BRANCH = sh(returnStdout: true, script: "git branch | grep '*' | cut -d ' ' -f2").trim()
-        REGISTRY = "docker-registry-default.apps.do-prd-okp-m0.do.viaa.be"
+        REGISTRY = "docker-registry-default.meemoo-596946-2bc857e5f10eb63ab790a3a1d19a696c-0001.eu-de.containers.appdomain.cloud"
     }
     stages {
         stage('Build docker') {
@@ -27,6 +27,16 @@ pipeline {
         stage('Run the linter') {
             steps {
                 sh './jenkins/scripts/lint.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
+            }
+        }
+        stage('tag image to latest') {
+            steps {
+                sh 'docker tag "${REGISTRY}/viaa-tools/ldap2deewee:${VERSION}" "${REGISTRY}/viaa-tools/ldap2deewee:latest"'
+            }
+        }
+        stage('push image') {
+            steps {
+                sh 'login_oc.sh https://c100-e.eu-de.containers.cloud.ibm.com:31240/ &&  docker push "${REGISTRY}/viaa-tools/ldap2deewee:latest"'
             }
         }
     }
