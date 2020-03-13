@@ -11,22 +11,33 @@ pipeline {
     environment {
         VERSION = sh(returnStdout: true, script: "git describe --tags || echo latest").trim()
         BRANCH = sh(returnStdout: true, script: "git branch | grep '*' | cut -d ' ' -f2").trim()
-        REGISTRY = "docker-registry-default.apps.do-prd-okp-m0.do.viaa.be"
+        IMAGE_NAME = "viaa-tools/ldap2deewee"
+        REGISTRY = "docker-registry-default.meemoo-596946-2bc857e5f10eb63ab790a3a1d19a696c-0001.eu-de.containers.appdomain.cloud"
     }
     stages {
-        stage('Build docker') {
+        stage('Build docker image') {
             steps {
-                sh './jenkins/scripts/build.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
+                sh './jenkins/scripts/build.sh "${REGISTRY}" "${IMAGE_NAME}" "${VERSION}"'
             }
         }
-        stage('Test in docker container') {
+        stage('Run tests in container') {
             steps {
-                sh './jenkins/scripts/test.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
+                sh './jenkins/scripts/test.sh "${REGISTRY}" "${IMAGE_NAME}" "${VERSION}"'
             }
         }
-        stage('Run the linter') {
+        stage('Run linter in container') {
             steps {
-                sh './jenkins/scripts/lint.sh "${REGISTRY}" "${BRANCH}" "${VERSION}"'
+                sh './jenkins/scripts/lint.sh "${REGISTRY}" "${IMAGE_NAME}" "${VERSION}"'
+            }
+        }
+        stage('Tag docker image to latest') {
+            steps {
+                sh './jenkins/scripts/tag.sh "${REGISTRY}" "${IMAGE_NAME}" "${VERSION}"'
+            }
+        }
+        stage('Push docker image to repo') {
+            steps {
+                sh './jenkins/scripts/push.sh "${REGISTRY}" "${IMAGE_NAME}"'
             }
         }
     }

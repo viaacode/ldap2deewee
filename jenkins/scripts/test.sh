@@ -1,6 +1,6 @@
 REGISTRY=$1
-BRANCH=$2
+IMAGE_NAME=$2
 VERSION=$3
 
-docker container run --name ldap2deewee_test "${REGISTRY}/ldap2deewee:${BRANCH}-${VERSION}" \
+docker container run --name ldap2deewee_test "${REGISTRY}/${IMAGE_NAME}:${VERSION}" \
     "-m" "pytest" "--cov=app" "--cov=deewee_communication" "--cov=ldap_communication" "tests"
