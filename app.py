@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
 from ldap3.core.exceptions import LDAPExceptionError
 from psycopg2 import OperationalError as PSQLError

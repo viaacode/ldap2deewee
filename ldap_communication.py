@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import ldap3
 from datetime import datetime
 from functools import wraps
