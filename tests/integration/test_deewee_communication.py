@@ -9,12 +9,13 @@ from ldap3 import Server, Connection, MOCK_SYNC, ALL_ATTRIBUTES, OFFLINE_SLAPD_2
 from testing.postgresql import PostgresqlFactory
 import os
 
-from deewee_communication import PostgresqlWrapper, DeeweeClient
+from deewee_communication import (
+    PostgresqlWrapper, DeeweeClient,
+    COUNT_ENTITIES_SQL, TABLE_NAME
+)
 
 
-TABLE_NAME = 'entities'
 EXECUTE_SQL = f'SELECT version();'
-COUNT_ENTITIES_SQL = f'SELECT COUNT(*) FROM {TABLE_NAME};'
 INSERT_ENTITIES_SQL = f'INSERT INTO {TABLE_NAME} (ldap_uuid) VALUES (%s);'
 
 

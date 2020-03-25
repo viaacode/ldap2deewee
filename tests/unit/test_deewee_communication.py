@@ -10,11 +10,10 @@ from datetime import datetime
 
 from viaa.configuration import ConfigParser
 
-from deewee_communication import PostgresqlWrapper, DeeweeClient
-
-TABLE_NAME = 'entities'
-COUNT_ENTITIES_SQL = f'SELECT COUNT(*) FROM {TABLE_NAME};'
-INSERT_ENTITIES_SQL = f'INSERT INTO {TABLE_NAME} (ldap_uuid) VALUES (%s);'
+from deewee_communication import (
+    PostgresqlWrapper, DeeweeClient,
+    COUNT_ENTITIES_SQL, UPSERT_ENTITIES_SQL, MAX_LAST_MODIFIED_TIMESTAMP_SQL
+)
 
 
 class TestPostgresqlWrapper:
@@ -34,19 +33,19 @@ class TestPostgresqlWrapper:
     def test_execute_insert(self, mock_connect, postgresql_wrapper):
         key = str(uuid.uuid4())
         mock_connect.cursor.return_value.description = None
-        postgresql_wrapper.execute(INSERT_ENTITIES_SQL, [key])
+        postgresql_wrapper.execute(UPSERT_ENTITIES_SQL, [key])
         cursor = mock_connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
         assert cursor.execute.call_count == 1
-        assert cursor.execute.call_args[0][0] == INSERT_ENTITIES_SQL
+        assert cursor.execute.call_args[0][0] == UPSERT_ENTITIES_SQL
         assert cursor.execute.call_args[0][1] == [key]
 
     @patch('psycopg2.connect')
     def test_executemany(self, mock_connect, postgresql_wrapper):
         values = [(str(uuid.uuid4()),), (str(uuid.uuid4()),)]
-        postgresql_wrapper.executemany(INSERT_ENTITIES_SQL, values)
+        postgresql_wrapper.executemany(UPSERT_ENTITIES_SQL, values)
         cursor = mock_connect.return_value.__enter__.return_value.cursor.return_value.__enter__.return_value
         assert cursor.executemany.call_count == 1
-        assert cursor.executemany.call_args[0][0] == INSERT_ENTITIES_SQL
+        assert cursor.executemany.call_args[0][0] == UPSERT_ENTITIES_SQL
         assert cursor.executemany.call_args[0][1] == values
 
 
@@ -100,7 +99,7 @@ class TestDeeweeClient:
         val2 = deewee_client._prepare_vars_upsert(ldap_result_2, 'person')
 
         assert postgresql_wrapper_mock.executemany.call_count == 1
-        assert postgresql_wrapper_mock.executemany.call_args[0][0] == deewee_client.UPSERT_ENTITIES_SQL
+        assert postgresql_wrapper_mock.executemany.call_args[0][0] == UPSERT_ENTITIES_SQL
         assert postgresql_wrapper_mock.executemany.call_args[0][1] == [val1, val2]
 
     def test_max_last_modified_timestamp(self, deewee_client):
@@ -108,12 +107,12 @@ class TestDeeweeClient:
         dt = datetime.now()
         postgresql_wrapper_mock.execute.return_value = [[dt]]
         value = deewee_client.max_last_modified_timestamp()
-        assert postgresql_wrapper_mock.execute.call_args[0][0] == deewee_client.MAX_LAST_MODIFIED_TIMESTAMP_SQL
+        assert postgresql_wrapper_mock.execute.call_args[0][0] == MAX_LAST_MODIFIED_TIMESTAMP_SQL
         assert value == dt
 
     def test_count(self, deewee_client):
         postgresql_wrapper_mock = deewee_client.postgresql_wrapper
         postgresql_wrapper_mock.execute.return_value = [[5]]
         value = deewee_client.count()
-        assert postgresql_wrapper_mock.execute.call_args[0][0] == deewee_client.COUNT_ENTITIES_SQL
+        assert postgresql_wrapper_mock.execute.call_args[0][0] == COUNT_ENTITIES_SQL
         assert value == 5
