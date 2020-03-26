@@ -21,8 +21,8 @@ class App:
 
     def __init__(self):
         # Initialize ldap and deewee clients
-        self.ldap_client = LdapClient(config.config['ldap'])
-        self.deewee_client = DeeweeClient(config.config['postgresql'])
+        self.ldap_client = LdapClient(config.config["ldap"])
+        self.deewee_client = DeeweeClient(config.config["postgresql"])
 
     def _should_do_full_sync(self):
         """If the target table is empty, a full load is needed"""
@@ -31,38 +31,44 @@ class App:
     def _sync(self, modified_since: datetime = None):
         """"Will sync the information in LDAP to the PostgreSQL DB.
 
-        Executes an LDAP search per type. Those results will be send through in one transaction.
-        This means that is the transaction fails, it will rollback and the DB will not be in an incomplete state.
+        Executes an LDAP search per type.
+        Those results will be send through in one transaction.
+        If the transaction fails, rollback so that the DB will not be in an incomplete state.
 
         Arguments:
-            modified_since -- Searches the LDAP results based on this parameter. If None, it will retrieve all LDAP entries.
+            modified_since -- Searches the LDAP results based on this parameter.
+                              If None, it will retrieve all LDAP entries.
         """
 
         # Orgs
-        logger.info('Searching for orgs')
-        ldap_results_orgs = self.ldap_client.search_ldap_orgs(modified_since)
-        logger.info(f'Found {len(ldap_results_orgs)} org(s) to sync')
+        logger.info("Searching for orgs")
+        ldap_orgs = self.ldap_client.search_orgs(modified_since)
+        logger.info(f"Found {len(ldap_orgs)} org(s) to sync")
 
         # People
-        logger.info('Searching for people')
-        ldap_results_people = self.ldap_client.search_ldap_people(modified_since)
-        logger.info(f'Found {len(ldap_results_people)} people to sync')
+        logger.info("Searching for people")
+        ldap_people = self.ldap_client.search_people(modified_since)
+        logger.info(f"Found {len(ldap_people)} people to sync")
 
-        self.deewee_client.upsert_ldap_results_many([(ldap_results_orgs, 'org'), (ldap_results_people, 'person')])
+        self.deewee_client.upsert_ldap_results_many(
+            [(ldap_orgs, "org"), (ldap_people, "person")]
+        )
 
     def main(self):
         modified_since = None
         try:
             if self._should_do_full_sync():
-                logger.info('Start full sync')
+                logger.info("Start full sync")
             else:
                 modified_since = self.deewee_client.max_last_modified_timestamp()
-                logger.info(f'Start sync of difference since last sync - {modified_since.isoformat()}')
+                logger.info(
+                    f"Start sync of difference since last sync - {modified_since.isoformat()}"
+                )
             self._sync(modified_since)
         except (PSQLError, LDAPExceptionError) as e:
             logger.error(e)
             raise e
-        logger.info('sync successful')
+        logger.info("sync successful")
 
 
 if __name__ == "__main__":

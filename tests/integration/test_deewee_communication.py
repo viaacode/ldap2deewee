@@ -101,8 +101,16 @@ class TestDeeweeClient:
         """Creates and returns some LDAP entries via ldap3 mock functionality"""
         # Create mock server with openLDAP schema
         server = Server('mock_server', get_info=OFFLINE_SLAPD_2_4)
-        conn = Connection(server, 'uid=admin,dc=hetarchief,dc=be', 'Secret123', client_strategy=MOCK_SYNC)
-        conn.strategy.add_entry('uid=admin,dc=hetarchief,dc=be', {'userPassword': 'Secret123', 'sn': 'admin_sn'})
+        conn = Connection(
+            server,
+            'uid=admin,dc=hetarchief,dc=be',
+            'Secret123',
+            client_strategy=MOCK_SYNC
+        )
+        conn.strategy.add_entry(
+            'uid=admin,dc=hetarchief,dc=be',
+            {'userPassword': 'Secret123', 'sn': 'admin_sn'}
+        )
 
         now = datetime.now()
         conn.bind()
@@ -127,10 +135,18 @@ class TestDeeweeClient:
                   'modifyTimestamp': now, 'sn': 'test2', 'telephoneNumber': 1112})
 
         attrs = [ALL_ATTRIBUTES, 'modifyTimestamp', 'entryUUID']
-        conn.search('ou=orgs,dc=hetarchief,dc=be', '(&(objectClass=*)(!(ou=orgs)))', attributes=attrs)
+        conn.search(
+            'ou=orgs,dc=hetarchief,dc=be',
+            '(&(objectClass=*)(!(ou=orgs)))',
+            attributes=attrs
+        )
         orgs = conn.entries
 
-        conn.search('ou=people,dc=hetarchief,dc=be', '(&(objectClass=*)(!(ou=people)))', attributes=attrs)
+        conn.search(
+            'ou=people,dc=hetarchief,dc=be',
+            '(&(objectClass=*)(!(ou=people)))',
+            attributes=attrs
+        )
         people = conn.entries
         return (orgs, people)
 

@@ -22,6 +22,7 @@ MAX_LAST_MODIFIED_TIMESTAMP_SQL = f'SELECT max(last_modified_timestamp) FROM {TA
 
 class PostgresqlWrapper:
     """Allows for executing SQL statements to a postgresql database"""
+
     def __init__(self, params: dict):
         self.params_postgresql = params
 
@@ -65,22 +66,34 @@ class DeeweeClient:
 
         Transform it to a tuple containing the parameters to be able to upsert.
         """
-        return (str(ldap_result.entryUUID), type, ldap_result.entry_to_json(),
-                ldap_result.modifyTimestamp.value)
+        return (
+            str(ldap_result.entryUUID),
+            type,
+            ldap_result.entry_to_json(),
+            ldap_result.modifyTimestamp.value
+        )
 
     def upsert_ldap_results_many(self, ldap_results: list):
         """Upsert the LDAP entries into PostgreSQL.
 
-       Transforms and flattens the LDAP entries to one list in order to execute in one transaction.
+       Transforms and flattens the LDAP entries to one list,
+       in order to execute in one transaction.
 
         Arguments:
-            ldap_results -- list of two-tuples. The tuple contains a list of LDAP entries and a type (str)
+            ldap_results -- list of Tuple[list[LDAP_Entry], str].
+                            The tuple contains a list of LDAP entries and a type (str)
         """
         vars_list = []
         for ldap_result_tuple in ldap_results:
             type = ldap_result_tuple[1]
             # Parse and flatten the SQL values from the ldap_results as a passable list
-            vars_list.extend([self._prepare_vars_upsert(ldap_result, type) for ldap_result in ldap_result_tuple[0]])
+            vars_list.extend(
+                [
+                    self._prepare_vars_upsert(ldap_result, type)
+                    for ldap_result
+                    in ldap_result_tuple[0]
+                ]
+            )
         self.postgresql_wrapper.executemany(UPSERT_ENTITIES_SQL, vars_list)
 
     def max_last_modified_timestamp(self) -> datetime:
@@ -104,7 +117,7 @@ class DeeweeClient:
             vars should be a tuple containing the parameters.
 
         Arguments:
-            where_clause -- represents the entire clause that comes after the where keyword
+            where_clause -- represents the clause that comes after the where keyword
             vars -- see above
 
         Returns:

@@ -34,7 +34,9 @@ class TestApp:
 
     @patch.object(App, '_sync', return_value=None)
     @patch.object(App, '_should_do_full_sync', return_value=True)
-    @patch.object(DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now())
+    @patch.object(
+        DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now()
+    )
     def test_main_full(self, max_last_modified_timestamp_mock, should_do_full_sync_mock, sync_mock):
         app = App()
         app.main()
@@ -48,7 +50,9 @@ class TestApp:
 
     @patch.object(App, '_sync', return_value=None)
     @patch.object(App, '_should_do_full_sync', return_value=False)
-    @patch.object(DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now())
+    @patch.object(
+        DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now()
+    )
     def test_main_diff(self, max_last_modified_timestamp_mock, should_do_full_sync_mock, sync_mock):
         app = App()
         app.main()
@@ -60,20 +64,23 @@ class TestApp:
         call_arg = sync_mock.call_args[0][0]
         assert type(call_arg) == datetime
 
-    @patch.object(LdapClient, 'search_ldap_orgs', return_value=['org1'])
-    @patch.object(LdapClient, 'search_ldap_people', return_value=['person1'])
+    @patch.object(LdapClient, 'search_orgs', return_value=['org1'])
+    @patch.object(LdapClient, 'search_people', return_value=['person1'])
     @patch.object(DeeweeClient, 'upsert_ldap_results_many', return_value=None)
-    def test_sync(self, upsert_ldap_results_many_mock, search_ldap_people_mock, search_ldap_orgs_mock):
+    def test_sync(self, upsert_ldap_results_many_mock, search_people_mock, search_orgs_mock):
         app = App()
         app._sync()
 
-        assert search_ldap_orgs_mock.call_count == 1
-        assert search_ldap_people_mock.call_count == 1
+        assert search_orgs_mock.call_count == 1
+        assert search_people_mock.call_count == 1
         assert upsert_ldap_results_many_mock.call_count == 1
 
-        assert search_ldap_orgs_mock.call_args[0][0] is None
-        assert search_ldap_people_mock.call_args[0][0] is None
-        assert upsert_ldap_results_many_mock.call_args[0][0] == [(['org1'], 'org'), (['person1'], 'person')]
+        assert search_orgs_mock.call_args[0][0] is None
+        assert search_people_mock.call_args[0][0] is None
+        assert upsert_ldap_results_many_mock.call_args[0][0] == [
+            (['org1'], 'org'),
+            (['person1'], 'person')
+        ]
 
     @patch.object(App, '_should_do_full_sync', side_effect=PSQLError)
     def test_main_psql_error(self, should_do_full_sync_mock):
