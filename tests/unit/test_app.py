@@ -14,51 +14,29 @@ from ldap_communication import LdapClient
 
 class TestApp:
 
-    @patch.object(DeeweeClient, 'count', return_value=0)
-    def test_should_do_full_sync(self, count_mock):
-        """If the target table is empty, a full load is needed"""
-        app = App()
-        full_sync = app._should_do_full_sync()
-
-        assert count_mock.call_count == 1
-        assert full_sync
-
-    @patch.object(DeeweeClient, 'count', return_value=1)
-    def test_should_do_full_sync_not(self, count_mock):
-        """If the target table is not empty, a full load is not needed"""
-        app = App()
-        full_sync = app._should_do_full_sync()
-
-        assert count_mock.call_count == 1
-        assert not full_sync
-
     @patch.object(App, '_sync', return_value=None)
-    @patch.object(App, '_should_do_full_sync', return_value=True)
     @patch.object(
-        DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now()
+        DeeweeClient, 'max_last_modified_timestamp', return_value=None
     )
-    def test_main_full(self, max_last_modified_timestamp_mock, should_do_full_sync_mock, sync_mock):
+    def test_main_full(self, max_last_modified_timestamp_mock, sync_mock):
         app = App()
         app.main()
 
         assert sync_mock.call_count == 1
-        assert should_do_full_sync_mock.call_count == 1
-        assert max_last_modified_timestamp_mock.call_count == 0
+        assert max_last_modified_timestamp_mock.call_count == 1
 
         call_arg = sync_mock.call_args[0][0]
         assert call_arg is None
 
     @patch.object(App, '_sync', return_value=None)
-    @patch.object(App, '_should_do_full_sync', return_value=False)
     @patch.object(
         DeeweeClient, 'max_last_modified_timestamp', return_value=datetime.now()
     )
-    def test_main_diff(self, max_last_modified_timestamp_mock, should_do_full_sync_mock, sync_mock):
+    def test_main_diff(self, max_last_modified_timestamp_mock, sync_mock):
         app = App()
         app.main()
 
         assert sync_mock.call_count == 1
-        assert should_do_full_sync_mock.call_count == 1
         assert max_last_modified_timestamp_mock.call_count == 1
 
         call_arg = sync_mock.call_args[0][0]
@@ -82,14 +60,14 @@ class TestApp:
             (['person1'], 'person')
         ]
 
-    @patch.object(App, '_should_do_full_sync', side_effect=PSQLError)
+    @patch.object(DeeweeClient, 'max_last_modified_timestamp', side_effect=PSQLError)
     def test_main_psql_error(self, should_do_full_sync_mock):
         app = App()
         with pytest.raises(PSQLError):
             app.main()
 
     @patch.object(App, '_sync', side_effect=LDAPExceptionError)
-    @patch.object(App, '_should_do_full_sync', return_value=True)
+    @patch.object(DeeweeClient, 'max_last_modified_timestamp', return_value=None)
     def test_main_ldap_error(self, should_do_full_sync_mock, sync_mock):
         app = App()
         with pytest.raises(LDAPExceptionError):

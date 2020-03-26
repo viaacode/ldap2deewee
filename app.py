@@ -24,10 +24,6 @@ class App:
         self.ldap_client = LdapClient(config.config["ldap"])
         self.deewee_client = DeeweeClient(config.config["postgresql"])
 
-    def _should_do_full_sync(self):
-        """If the target table is empty, a full load is needed"""
-        return self.deewee_client.count() == 0
-
     def _sync(self, modified_since: datetime = None):
         """"Will sync the information in LDAP to the PostgreSQL DB.
 
@@ -55,12 +51,11 @@ class App:
         )
 
     def main(self):
-        modified_since = None
         try:
-            if self._should_do_full_sync():
+            modified_since = self.deewee_client.max_last_modified_timestamp()
+            if modified_since is None:
                 logger.info("Start full sync")
             else:
-                modified_since = self.deewee_client.max_last_modified_timestamp()
                 logger.info(
                     f"Start sync of difference since last sync - {modified_since.isoformat()}"
                 )
