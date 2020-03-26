@@ -9,16 +9,22 @@ import copy
 
 from viaa.configuration import ConfigParser
 
-from ldap_communication import LdapWrapper, LdapClient
+from ldap_communication import (
+    LdapWrapper,
+    LdapClient,
+    SEARCH_ATTRIBUTES,
+    LDAP_PEOPLE_PREFIX,
+    LDAP_ORGS_PREFIX
+)
+
 
 LDAP_SUFFIX = 'dc=hetarchief,dc=be'
-LDAP_PEOPLE = f'ou=people,{LDAP_SUFFIX}'
-LDAP_ORGS = f'ou=orgs,{LDAP_SUFFIX}'
+LDAP_PEOPLE = f'{LDAP_PEOPLE_PREFIX},{LDAP_SUFFIX}'
+LDAP_ORGS = f'o{LDAP_ORGS_PREFIX},{LDAP_SUFFIX}'
 DN_ORG1 = f'o=meemoo_org1,{LDAP_ORGS}'
 DN_ORG2 = f'o=meemoo_org2,{LDAP_ORGS}'
 DN_PERSON1 = f'mail=meemoo_user1@meemoo.meemoo,{LDAP_PEOPLE}'
 DN_PERSON2 = f'mail=meemoo_user2@meemoo.meemoo,{LDAP_PEOPLE}'
-
 ldap_config_dict = ConfigParser().config['ldap']
 
 
@@ -40,7 +46,7 @@ class LdapWrapperMock(LdapWrapper):
 class LdapClientMock(LdapClient):
 
     def __init__(self, params: dict):
-        self.ldap_wrapper = LdapWrapperMock(params, LdapClient.SEARCH_ATTRIBUTES)
+        self.ldap_wrapper = LdapWrapperMock(params, SEARCH_ATTRIBUTES)
 
 
 class TestLdapWrapperMock:

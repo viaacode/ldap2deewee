@@ -6,6 +6,12 @@ from datetime import datetime
 from functools import wraps
 
 
+LDAP_SUFFIX = 'dc=hetarchief,dc=be'
+LDAP_PEOPLE_PREFIX = 'ou=people'
+LDAP_ORGS_PREFIX = 'ou=orgs'
+SEARCH_ATTRIBUTES = [ldap3.ALL_ATTRIBUTES, 'modifyTimestamp', 'entryUUID']
+
+
 class LdapWrapper:
     """Allows for communicating with an LDAP server"""
 
@@ -58,13 +64,8 @@ class LdapWrapper:
 class LdapClient:
     """Acts as a client to query relevant information from LDAP"""
 
-    LDAP_SUFFIX = 'dc=hetarchief,dc=be'
-    LDAP_PEOPLE_PREFIX = 'ou=people'
-    LDAP_ORGS_PREFIX = 'ou=orgs'
-    SEARCH_ATTRIBUTES = [ldap3.ALL_ATTRIBUTES, 'modifyTimestamp', 'entryUUID']
-
     def __init__(self, params: dict,):
-        self.ldap_wrapper = LdapWrapper(params, self.SEARCH_ATTRIBUTES)
+        self.ldap_wrapper = LdapWrapper(params, SEARCH_ATTRIBUTES)
 
     def _search(self, prefix: str, partial_filter: str, modified_at: datetime = None) -> list:
         # Format modify timestamp to an LDAP filter string
@@ -75,14 +76,14 @@ class LdapClient:
         )
         # Construct the LDAP filter string
         filter = f'(&(objectClass=*){partial_filter}{modify_filter_string})'
-        return self.ldap_wrapper.search(f'{prefix},{self.LDAP_SUFFIX}', filter)
+        return self.ldap_wrapper.search(f'{prefix},{LDAP_SUFFIX}', filter)
 
     def search_orgs(self, modified_at: datetime = None) -> list:
         return self._search(
-            self.LDAP_ORGS_PREFIX, f'(!({self.LDAP_ORGS_PREFIX}))', modified_at
+            LDAP_ORGS_PREFIX, f'(!({LDAP_ORGS_PREFIX}))', modified_at
         )
 
     def search_people(self, modified_at: datetime = None) -> list:
         return self._search(
-            self.LDAP_PEOPLE_PREFIX, f'(!({self.LDAP_PEOPLE_PREFIX}))', modified_at
+            LDAP_PEOPLE_PREFIX, f'(!({LDAP_PEOPLE_PREFIX}))', modified_at
         )
