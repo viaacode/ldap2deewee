@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import psycopg2
+import uuid
 from datetime import datetime
 from functools import wraps
 
@@ -101,7 +102,7 @@ class DeeweeClient:
         return self.postgresql_wrapper.execute(MAX_LAST_MODIFIED_TIMESTAMP_SQL)[0][0]
 
     def insert_entity(self, date_time: datetime = datetime.now()):
-        vars = ('550e8400-e29b-41d4-a716-446655440000', 'person', '{"key": "value"}', date_time)
+        vars = (str(uuid.uuid4()), 'person', '{"key": "value"}', date_time)
         self.postgresql_wrapper.execute(UPSERT_ENTITIES_SQL, vars)
 
     def count(self) -> int:
