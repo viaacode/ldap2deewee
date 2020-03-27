@@ -8,8 +8,8 @@ from psycopg2 import OperationalError as PSQLError
 from viaa.configuration import ConfigParser
 from viaa.observability import logging
 
-from ldap_communication import LdapClient
-from deewee_communication import DeeweeClient
+from app.ldap_communication import LdapClient
+from app.deewee_communication import DeeweeClient
 
 
 # Initialize the logger and the configuration

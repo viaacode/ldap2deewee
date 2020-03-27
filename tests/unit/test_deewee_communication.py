@@ -10,7 +10,7 @@ from datetime import datetime
 
 from viaa.configuration import ConfigParser
 
-from deewee_communication import (
+from app.deewee_communication import (
     PostgresqlWrapper,
     DeeweeClient,
     COUNT_ENTITIES_SQL,
@@ -77,7 +77,7 @@ class LdapEntryMock:
 class TestDeeweeClient:
 
     @pytest.fixture
-    @patch('deewee_communication.PostgresqlWrapper')
+    @patch('app.deewee_communication.PostgresqlWrapper')
     def deewee_client(self, postgresql_wrapper_mock):
         return DeeweeClient({})
 

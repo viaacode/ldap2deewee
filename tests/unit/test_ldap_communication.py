@@ -7,7 +7,7 @@ from datetime import datetime
 
 from viaa.configuration import ConfigParser
 
-from ldap_communication import LdapWrapper, LdapClient
+from app.ldap_communication import LdapWrapper, LdapClient
 
 
 class TestLdapWrapper:
@@ -45,7 +45,7 @@ class TestLdapWrapper:
 
 class TestLdapClient:
 
-    @patch('ldap_communication.LdapWrapper')
+    @patch('app.ldap_communication.LdapWrapper')
     @patch.object(LdapClient, '_search', return_value=None)
     def test_search_orgs(self, _search_mock, ldap_wrapper):
         dt = datetime.now()
@@ -56,7 +56,7 @@ class TestLdapClient:
         assert _search_mock.call_args[0][1] == '(!(ou=orgs))'
         assert _search_mock.call_args[0][2] == dt
 
-    @patch('ldap_communication.LdapWrapper')
+    @patch('app.ldap_communication.LdapWrapper')
     @patch.object(LdapClient, '_search', return_value=None)
     def test_search_people(self, _search_mock, ldap_wrapper):
         dt = datetime.now()
@@ -67,7 +67,7 @@ class TestLdapClient:
         assert _search_mock.call_args[0][1] == '(!(ou=people))'
         assert _search_mock.call_args[0][2] == dt
 
-    @patch('ldap_communication.LdapWrapper')
+    @patch('app.ldap_communication.LdapWrapper')
     def test_search(self, ldap_wrapper_mock):
         prefix = 'prefix'
         partial_filter = 'partial'

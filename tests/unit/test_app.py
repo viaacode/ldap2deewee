@@ -7,9 +7,9 @@ from datetime import datetime
 from ldap3.core.exceptions import LDAPExceptionError
 from psycopg2 import OperationalError as PSQLError
 
-from app import App
-from deewee_communication import DeeweeClient
-from ldap_communication import LdapClient
+from app.app import App
+from app.deewee_communication import DeeweeClient
+from app.ldap_communication import LdapClient
 
 
 class TestApp:
