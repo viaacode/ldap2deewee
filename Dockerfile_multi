@@ -25,7 +25,7 @@ COPY --from=builder /src/usr/app/venv/ /src/usr/app/venv/
 
 # Run the application
 ENTRYPOINT ["./venv/bin/python3"]
-CMD ["app.py"]
+CMD ["-m", "app.app"]
 
 
 # Create image which will run the tests

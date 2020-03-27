@@ -23,4 +23,4 @@ USER postgres
 
 # Run the application
 ENTRYPOINT ["python3"]
-CMD ["app.py"]
+CMD ["-m", "app.app"]
