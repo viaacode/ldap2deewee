@@ -8,8 +8,8 @@ from ldap3.core.exceptions import LDAPExceptionError
 from psycopg2 import OperationalError as PSQLError
 
 from app.app import App
-from app.deewee_communication import DeeweeClient
-from app.ldap_communication import LdapClient
+from app.comm.deewee import DeeweeClient
+from app.comm.ldap import LdapClient
 
 
 class TestApp:

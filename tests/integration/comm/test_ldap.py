@@ -9,7 +9,7 @@ import copy
 
 from viaa.configuration import ConfigParser
 
-from app.ldap_communication import (
+from app.comm.ldap import (
     LdapWrapper,
     LdapClient,
     SEARCH_ATTRIBUTES,

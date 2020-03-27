@@ -9,7 +9,7 @@ from ldap3 import Server, Connection, MOCK_SYNC, ALL_ATTRIBUTES, OFFLINE_SLAPD_2
 from testing.postgresql import PostgresqlFactory
 import os
 
-from app.deewee_communication import (
+from app.comm.deewee import (
     PostgresqlWrapper, DeeweeClient,
     COUNT_ENTITIES_SQL, TABLE_NAME
 )
