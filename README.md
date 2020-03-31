@@ -88,7 +88,7 @@ The deewee integration tests make use of the PostgreSQL command `initdb` to crea
 If desired, you can also run coverage reports:
 
 ```shell
-python3 -m pytest "--cov=app" "--cov=deewee" "--cov=ldap"
+python3 -m pytest "--cov=app.app" "--cov=app.comm"
 ```
 
 ### External servers via containers
@@ -97,9 +97,7 @@ If you have no access to an LDAP and/or PostgreSQL server they can easily be set
 
 #### LDAP Container
 
-A container which runs an LDAP server with an empty structure can be found [here](https://github.com/viaacode/docker-openldap-sc-idm "docker-openldap-sc-idm").
-
-The `./additional_containers/openldap/sample.ldif` in this repo provides a couple of orgs and people which can be used while testing locally. The LDIF file can be imported after creating the LDAP server. It can also be loaded in when building the container. To do so, move `sample.ldif` to the ldif folder of the openldap repo before building the docker image.
+A container which runs an LDAP server with an empty structure can be found [here](https://github.com/viaacode/docker-openldap-sc-idm "docker-openldap-sc-idm"). The custom `objectClasses` and `attributeTypes` can be found [here](https://github.com/viaacode/viaa-ldap-schema "viaa-ldap-schema"). The latter repository also contains a `sample.ldif` file with some `orgs` and `persons`.
 
 #### PostgreSQL Container
 
